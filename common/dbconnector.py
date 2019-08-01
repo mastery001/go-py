@@ -7,14 +7,20 @@ import MySQLdb
 
 class DBConnector :
 
-    def __init__(self , dbname = 'searcher'):
+    def __init__(self , dbname = None):
         self.conn = MySQLdb.connect(
             host='localhost',
             port=3306,
             user='root',
             passwd='root',
             db=dbname,
+            charset = 'utf8'
         )
+        self.conn.set_character_set('utf8')
+        cursor = self.conn.cursor()
+        cursor.execute('SET NAMES utf8;')
+        cursor.execute('SET CHARACTER SET utf8;')
+        cursor.execute('SET character_set_connection=utf8;')
 
     def __del__(self):
         self.conn.close()
@@ -24,6 +30,12 @@ class DBConnector :
 
     def dbcommit(self):
         self.conn.commit()
+
+    def exec_many(self , sql , datas):
+        cursor = self.conn.cursor()
+        cursor.executemany(sql , datas)
+        self.dbcommit()
+        return cursor
 
     def execsql(self , sqls , autocommit = True):
         cursor = self.conn.cursor()
