@@ -21,6 +21,7 @@ class DBConnector :
         cursor.execute('SET NAMES utf8;')
         cursor.execute('SET CHARACTER SET utf8;')
         cursor.execute('SET character_set_connection=utf8;')
+        self.dbcommit()
 
     def __del__(self):
         self.conn.close()
