@@ -10,6 +10,7 @@ import random
 import bs4
 from bs4 import BeautifulSoup
 import json
+import ast
 
 
 # 销量从高到低排名
@@ -123,6 +124,7 @@ class TmallLocalPersist :
 
     def write(self , id , page , json):
         self._fileWrite.write("%s$%s$%s" % (id , page , json))
+
 
     def close(self):
         self._fileWrite.flush_and_close()
@@ -392,6 +394,16 @@ class TmallCrawler:
             select sku from product_comment
         """)
 
+    def readProductInfo(self , query):
+        file_write = FileWrite('tmall_商品_%s.txt' % query)
+
+        product_infos = []
+
+        for line in file_write.read():
+            product_infos.append(ast.literal_eval(line))
+
+        return product_infos
+
 # import sys
 # reload(sys)
 # sys.setdefaultencoding('utf8')
@@ -404,7 +416,8 @@ if __name__ == '__main__':
 
     # t.getProductInfo('真皮 皮裙 女' , save=True)
 
-    datas = t.crawl('真皮 皮裙 女')
+    t.readProductInfo('真皮 皮裙 女')
+    # datas = t.crawl('真皮 皮裙 女')
 
     # t.persist('皮衣', datas)
 

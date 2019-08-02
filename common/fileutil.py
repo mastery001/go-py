@@ -6,13 +6,17 @@
 class FileWrite:
 
     def __init__(self , fileName):
-        self._f = open(fileName , 'w')
+        self._f = open(fileName , 'rw')
 
     def __del__(self):
         self._f = None
 
     def write(self , line):
         self._f.writelines('%s \r\n' % line)
+
+    def read(self):
+        return self._f
+
 
     def flush_and_close(self):
         self._f.flush()
