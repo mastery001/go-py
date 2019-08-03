@@ -1,5 +1,6 @@
 test
 *.txt
+*.html
 .idea
 >>>>>>> origin/master
 # Byte-compiled / optimized / DLL files
