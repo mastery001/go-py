@@ -5,8 +5,11 @@
 
 class FileWrite:
 
-    def __init__(self , fileName):
-        self._f = open(fileName , 'rw')
+    def __init__(self , fileName , read=False):
+        mode = 'w'
+        if read :
+            mode = 'rw'
+        self._f = open(fileName , mode)
 
     def __del__(self):
         self._f = None

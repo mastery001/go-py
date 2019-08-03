@@ -26,8 +26,8 @@ def findColor(full , color) :
 
     return "unknown"
 
-def showColor() :
-    rows = tmall.getAll()
+def showColor(category) :
+    rows = tmall.getAll('sku', 'word_category' , category)
     colors = {}
     for row in rows :
         color = row[0]
@@ -55,8 +55,8 @@ def findSize(full , size) :
 
     return "unknown"
 
-def showSize() :
-    rows = tmall.getAll()
+def showSize(category) :
+    rows = tmall.getAll('sku' , 'word_category' , category)
     sizes = {}
     for row in rows:
         size = row[0]
@@ -70,8 +70,8 @@ def showSize() :
 
     return sizes
 
-def render(title , map , path):
-    pieRender = PieRender('女皮衣')
+def render(name , title , map , path):
+    pieRender = PieRender(name)
 
     pieRender.add(title, map.keys(), map.values(), is_label_show=True)
 
@@ -79,11 +79,17 @@ def render(title , map , path):
 
 if __name__ == '__main__':
 
-    colors = showColor()
-    sizes = showSize()
+    # colors = showColor('皮衣')
+    # sizes = showSize('皮衣')
+    #
+    # render('女皮衣' , "颜色" , colors , 'piyi_color.html')
+    # render('女皮衣' , "尺码" , sizes , 'piyi_size.html')
 
-    render("颜色" , colors , 'color.html')
-    render("尺码" , sizes , 'size.html')
+    colors = showColor('皮裙')
+    sizes = showSize('皮裙')
+
+    render('女皮裙' , "颜色" , colors , 'piqun_color.html')
+    render('女皮裙' , "尺码" , sizes , 'piqun_size.html')
 
 
     # pie = Pie('' , width=1300 , height = 620)

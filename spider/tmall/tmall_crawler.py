@@ -116,7 +116,7 @@ class Comment(object):
 
 class TmallLocalPersist :
 
-    def __init__(self , query):
+    def __init__(self , query , read = False):
         self._fileWrite = FileWrite('tmall_%s.txt' % query)
 
     def __del__(self):
@@ -125,6 +125,14 @@ class TmallLocalPersist :
     def write(self , id , page , json):
         self._fileWrite.write("%s$%s$%s" % (id , page , json))
 
+    def read(self):
+        comments = {}
+        for line in self._fileWrite.read() :
+            row = line.split('$')
+            if row[0] not in comments :
+                comments[row[0]] = []
+            comments[row[0]].append(ast.literal_eval(row[2]))
+        return comments
 
     def close(self):
         self._fileWrite.flush_and_close()
@@ -267,6 +275,9 @@ class TmallCrawler:
                     if clz == 'productStatus' :
                         elements = self.findElement(child, 'span')
                         product_info['month_buy_total'] = self.findElement(elements[0], 'em')[0].string.encode('utf8').strip()
+
+                        product_info['month_buy_total'] = product_info['month_buy_total'].split('笔')[0]
+
                         product_info['comment_count'] = self.findElement(elements[1], 'a')[0].string.encode('utf8').strip()
 
                 except Exception as e :
@@ -340,21 +351,24 @@ class TmallCrawler:
                 print("插入成功%d条" % i)
                 rows = []
                 continue
-
-            row = [
-                data['id'],
-                data['price'],
-                data['title'],
-                data['shop'],
-                data['month_buy_total'],
-                data['comment_count'],
-                data['date'],
-                data['content'],
-                data['sku'],
-                data['source'],
-                data['search_word'],
-                word_category
-            ]
+            try :
+                row = [
+                    data['id'],
+                    data['price'],
+                    data['title'] if 'title' in data else 'unknown',
+                    data['shop'] if 'shop' in data else 'unknown',
+                    data['month_buy_total'].split('笔')[0] if 'month_buy_total' in data else '0',
+                    data['comment_count'] if 'comment_count' in data else '0',
+                    data['date'],
+                    data['content'],
+                    data['sku'],
+                    data['source'],
+                    data['search_word'],
+                    word_category
+                ]
+            except Exception as e :
+                print data
+                raise e
 
             rows.append(row)
 
@@ -383,16 +397,14 @@ class TmallCrawler:
             self.conn.exec_many(COMMENT_SQL, datas)
             print("插入成功%d条" % i)
 
-    def getAll(self):
-        return self.conn.querysql("""
-            select sku from product_comment
-        """ , 1)
+    def getAll(self , column , condition , value):
+        return self.conn.querysql("select %s from product_info_comment where %s = '%s'" % (column , condition , value) , 1)
 
 
-    def getOne(self):
-        return self.conn.querysql("""
-            select sku from product_comment
-        """)
+    # def getOne(self , column):
+    #     return self.conn.querysql("""
+    #         select %s from product_info_comment
+    #     """ % column)
 
     def readProductInfo(self , query):
         file_write = FileWrite('tmall_商品_%s.txt' % query)
@@ -404,6 +416,49 @@ class TmallCrawler:
 
         return product_infos
 
+    def readCommentInfo(self , query):
+        local = TmallLocalPersist(query , read=True)
+        datas = local.read()
+        local.close()
+        return datas
+
+    def readLocalFile(self , query):
+        product_infos = self.readProductInfo(query)
+
+        comments = self.readCommentInfo(query)
+
+        datas = []
+
+        for product in product_infos :
+            if product['id'] in comments :
+                for commentJson in comments[product['id']] :
+                    try:
+
+                        # 评论列表
+                        rateList = commentJson['rateDetail']['rateList']
+
+                        n = len(rateList)
+
+                        i = 0
+
+                        while i < n:
+                            data = product.copy()
+
+                            data['date'] = rateList[i]['rateDate']
+                            data['content'] = rateList[i]['rateContent']
+                            data['sku'] = rateList[i]['auctionSku']
+                            data['source'] = rateList[i]['cmsSource']
+                            data['search_word'] = query
+
+                            datas.append(data)
+
+                            i += 1
+                            # break
+                    except Exception as e:
+                        print(e)
+
+        return datas
+
 # import sys
 # reload(sys)
 # sys.setdefaultencoding('utf8')
@@ -414,10 +469,26 @@ class TmallCrawler:
 if __name__ == '__main__':
     t = TmallCrawler()
 
+    # category = '皮裙'
+    # query = '真皮 皮裙 女'
+
+    # category = '皮衣'
+    # query = '真皮 皮衣 女'
+
+    category = '皮衣'
+    query = '真皮 皮衣 中长款 女'
+
     # t.getProductInfo('真皮 皮裙 女' , save=True)
 
-    t.readProductInfo('真皮 皮裙 女')
-    # datas = t.crawl('真皮 皮裙 女')
+    # t.readProductInfo('真皮 皮裙 女')
+    # t.readCommentInfo('真皮 皮裙 女')
+
+    # datas = t.readLocalFile(query)
+
+    # t.persist(category , datas)
+
+
+    # datas = t.crawl(query)
 
     # t.persist('皮衣', datas)
 
